@@ -26,7 +26,7 @@ export function LoginForm() {
     if (res?.error) {
       setError("Invalid email or password. Please try again.")
     } else {
-      router.push("/onboarding/survey")
+      router.push("/onboarding/survey")  // middleware redirects to dashboard if already completed
       router.refresh()
     }
   }

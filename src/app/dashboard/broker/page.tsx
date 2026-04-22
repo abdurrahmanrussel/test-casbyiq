@@ -1,6 +1,7 @@
 import { auth } from "@/auth"
 import { redirect } from "next/navigation"
 import { SignOutButton } from "@/components/auth/SignOutButton"
+import { RetakeSurveyButton } from "@/components/survey/RetakeSurveyButton"
 
 export default async function BrokerDashboard() {
   const session = await auth()
@@ -41,6 +42,10 @@ export default async function BrokerDashboard() {
           <p className="mt-2 text-sm" style={{ color: "#6b7a99" }}>
             Your brokerage fit analytics and agent pipeline.
           </p>
+        </div>
+
+        <div className="mb-8">
+          <RetakeSurveyButton />
         </div>
 
         {/* Placeholder cards */}
