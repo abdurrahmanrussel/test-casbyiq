@@ -33,11 +33,11 @@ export function SurveyQuestion({
         </p>
         <div className="flex flex-col gap-2">
           {LIKERT_OPTIONS.map((opt) => {
-            const selected = answer === Number(opt.value)
+            const selected = answer === opt.value
             return (
               <button
                 key={opt.value}
-                onClick={() => onAnswer(Number(opt.value))}
+                onClick={() => onAnswer(opt.value)}
                 className={`flex items-center gap-3 w-full text-left px-4 py-3 border rounded transition-colors ${
                   selected
                     ? "border-[#1a73e8] bg-[#e8f0fe]"
