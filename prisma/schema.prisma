@@ -27,7 +27,7 @@ model SurveyResponse {
   userId     String
   user       User     @relation(fields: [userId], references: [id])
   questionId String
-  answer     Int
+  answer     String
   createdAt  DateTime @default(now())
 
   @@unique([userId, questionId])
