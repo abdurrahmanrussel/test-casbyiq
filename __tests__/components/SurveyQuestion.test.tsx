@@ -37,7 +37,7 @@ describe("SurveyQuestion", () => {
   })
 
   it("shows page counter", () => {
-    render(<SurveyQuestion {...baseProps} current={2} total={5} />)
-    expect(screen.getByText("3 of 5")).toBeInTheDocument()
+    render(<SurveyQuestion {...baseProps} current={2} total={36} />)
+    expect(screen.getByText("3 of 36")).toBeInTheDocument()
   })
 })
