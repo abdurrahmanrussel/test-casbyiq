@@ -28,7 +28,7 @@ describe("POST /api/survey/answer", () => {
     expect(res.status).toBe(401)
   })
 
-  it("returns 400 when answer is out of range", async () => {
+  it("returns 400 when answer is not a string", async () => {
     ;(auth as jest.Mock).mockResolvedValue({ user: { id: "u1" } })
     const res = await POST(makeRequest({ questionId: "AUT_A1", answer: 6 }))
     expect(res.status).toBe(400)
@@ -37,7 +37,7 @@ describe("POST /api/survey/answer", () => {
   it("returns 200 and upserts answer", async () => {
     ;(auth as jest.Mock).mockResolvedValue({ user: { id: "u1" } })
     ;(prisma.surveyResponse.upsert as jest.Mock).mockResolvedValue({})
-    const res = await POST(makeRequest({ questionId: "AUT_A1", answer: 4 }))
+    const res = await POST(makeRequest({ questionId: "AUT_A1", answer: "4" }))
     expect(res.status).toBe(200)
   })
 })

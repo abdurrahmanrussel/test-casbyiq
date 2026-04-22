@@ -10,8 +10,8 @@ jest.mock("next-auth/react", () => ({ signIn: jest.fn() }))
 describe("RegisterForm", () => {
   it("renders all fields including role selector", () => {
     render(<RegisterForm />)
-    expect(screen.getByPlaceholderText(/email/i)).toBeInTheDocument()
-    expect(screen.getByPlaceholderText(/password/i)).toBeInTheDocument()
+    expect(screen.getByPlaceholderText(/brokerage\.com/i)).toBeInTheDocument()
+    expect(screen.getByPlaceholderText(/8 characters/i)).toBeInTheDocument()
     expect(screen.getByText("Agent")).toBeInTheDocument()
     expect(screen.getByText("Broker")).toBeInTheDocument()
   })

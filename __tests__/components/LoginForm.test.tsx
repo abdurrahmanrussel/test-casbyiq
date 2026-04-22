@@ -10,8 +10,8 @@ jest.mock("next/navigation", () => ({ useRouter: () => ({ push: jest.fn(), refre
 describe("LoginForm", () => {
   it("renders email and password fields", () => {
     render(<LoginForm />)
-    expect(screen.getByPlaceholderText(/email/i)).toBeInTheDocument()
-    expect(screen.getByPlaceholderText(/password/i)).toBeInTheDocument()
+    expect(screen.getByPlaceholderText(/brokerage\.com/i)).toBeInTheDocument()
+    expect(screen.getByPlaceholderText("••••••••")).toBeInTheDocument()
   })
 
   it("shows error when fields are empty on submit", async () => {
