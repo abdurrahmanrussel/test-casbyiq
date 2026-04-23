@@ -22,6 +22,14 @@ model User {
   surveyResponses SurveyResponse[]
 }
 
+model Question {
+  id        String @id        // e.g. AUT_A1
+  text      String
+  role      Role
+  dimension String            // AUT, COM, REL, GRIT, SR, EI
+  sortOrder Int
+}
+
 model SurveyResponse {
   id         String   @id @default(uuid())
   userId     String

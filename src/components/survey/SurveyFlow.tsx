@@ -4,7 +4,8 @@ import { useRouter } from "next/navigation"
 import { useSession } from "next-auth/react"
 import { SurveyQuestion } from "./SurveyQuestion"
 import { ProgressDots } from "./ProgressDots"
-import { Question } from "@/lib/questions"
+
+interface Question { id: string; text: string }
 
 interface Props {
   questions: Question[]

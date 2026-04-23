@@ -1,5 +1,7 @@
 "use client"
-import { LIKERT_OPTIONS, Question } from "@/lib/questions"
+import { LIKERT_OPTIONS } from "@/lib/questions"
+
+interface Question { id: string; text: string }
 
 interface Props {
   question: Question
