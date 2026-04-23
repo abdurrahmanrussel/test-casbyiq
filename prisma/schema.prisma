@@ -23,11 +23,19 @@ model User {
 }
 
 model Question {
-  id        String @id        // e.g. AUT_A1
-  text      String
-  role      Role
-  dimension String            // AUT, COM, REL, GRIT, SR, EI
-  sortOrder Int
+  id            String   @id
+  text          String
+  role          Role
+  surveyType    String   @default("agent_intake")
+  section       String   @default("1A")
+  questionType  String   @default("likert")
+  dimension     String?
+  isScored      Boolean  @default(false)
+  options       Json?
+  required      Boolean  @default(true)
+  sortOrder     Int
+  storageTarget String   @default("raw_json")
+  notes         String?
 }
 
 model SurveyResponse {

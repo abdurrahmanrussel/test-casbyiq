@@ -8,10 +8,11 @@ export default async function SurveyPage() {
   if (!session) redirect("/login")
   if (session.user.surveyCompleted) redirect(`/dashboard/${session.user.role}`)
 
+  const surveyType = session.user.role === "agent" ? "agent_intake" : "broker_intake"
   const questions = await prisma.question.findMany({
-    where: { role: session.user.role as "agent" | "broker" },
+    where: { surveyType },
     orderBy: { sortOrder: "asc" },
-    select: { id: true, text: true },
+    select: { id: true, text: true, questionType: true, options: true, required: true, isScored: true, section: true },
   })
 
   return <SurveyFlow questions={questions} role={session.user.role} />
