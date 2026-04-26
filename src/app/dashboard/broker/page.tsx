@@ -2,6 +2,7 @@ import { auth } from "@/auth"
 import { redirect } from "next/navigation"
 import { prisma } from "@/lib/prisma"
 import { ManageAgents } from "@/components/dashboard/ManageAgents"
+import { SignOutButton } from "@/components/auth/SignOutButton"
 
 type ScoreKey = "gritScore" | "selfRegScore" | "eiScore" | "autonomyScore" | "competenceScore" | "relatednessScore"
 
@@ -70,9 +71,12 @@ export default async function BrokerDashboard() {
         <span style={{ fontFamily: "var(--font-dm-mono, monospace)", fontSize: 15, fontWeight: 500, color: "#1a1916" }}>
           Kasby<span style={{ color: "#639922" }}>IQ</span>
         </span>
-        <span style={{ fontSize: 11, color: "#9c9b97", background: "#f2f1ee", padding: "4px 10px", borderRadius: 20, border: "1px solid rgba(0,0,0,0.09)" }}>
-          Broker
-        </span>
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <span style={{ fontSize: 11, color: "#9c9b97", background: "#f2f1ee", padding: "4px 10px", borderRadius: 20, border: "1px solid rgba(0,0,0,0.09)" }}>
+            Broker
+          </span>
+          <SignOutButton variant="light" />
+        </div>
       </nav>
 
       <main style={{ padding: "24px 32px 48px", maxWidth: 1100, margin: "0 auto" }}>
