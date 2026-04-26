@@ -19,7 +19,11 @@ model User {
   role            Role
   surveyCompleted Boolean          @default(false)
   createdAt       DateTime         @default(now())
+  brokerId        String?
+  broker          User?            @relation("BrokerAgents", fields: [brokerId], references: [id])
+  agents          User[]           @relation("BrokerAgents")
   surveyResponses SurveyResponse[]
+  scoreResult     ScoreResult?
 }
 
 model Question {
@@ -47,4 +51,19 @@ model SurveyResponse {
   createdAt  DateTime @default(now())
 
   @@unique([userId, questionId])
+}
+
+model ScoreResult {
+  id               String   @id @default(uuid())
+  userId           String   @unique
+  user             User     @relation(fields: [userId], references: [id])
+  surveyType       String
+  autonomyScore    Float
+  competenceScore  Float
+  relatednessScore Float
+  gritScore        Float
+  selfRegScore     Float
+  eiScore          Float
+  overallScore     Float
+  createdAt        DateTime @default(now())
 }
