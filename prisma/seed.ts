@@ -1,4 +1,4 @@
-import { Prisma, PrismaClient } from "@prisma/client"
+import { PrismaClient } from "@prisma/client"
 import { PrismaNeonHttp } from "@prisma/adapter-neon"
 import { neonConfig } from "@neondatabase/serverless"
 import { Agent, fetch as undiciF } from "undici"
@@ -357,7 +357,7 @@ async function main() {
         questionType: q.questionType,
         dimension: q.dimension ?? null,
         isScored: q.isScored,
-        options: q.options ?? Prisma.JsonNull,
+        options: q.options ?? undefined,
         required: q.required,
         sortOrder: q.sortOrder,
         storageTarget: q.storageTarget,
@@ -372,7 +372,7 @@ async function main() {
         questionType: q.questionType,
         dimension: q.dimension ?? null,
         isScored: q.isScored,
-        options: q.options ?? Prisma.JsonNull,
+        options: q.options ?? undefined,
         required: q.required,
         sortOrder: q.sortOrder,
         storageTarget: q.storageTarget,
