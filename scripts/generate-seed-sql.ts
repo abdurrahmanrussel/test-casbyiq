@@ -1,19 +1,12 @@
-import { Prisma, PrismaClient } from "@prisma/client"
-import { PrismaNeonHttp } from "@prisma/adapter-neon"
-import { neonConfig } from "@neondatabase/serverless"
-import { Agent, fetch as undiciF } from "undici"
-import * as dotenv from "dotenv"
-dotenv.config({ path: ".env.local" })
-dotenv.config()
-
-// Force IPv4 — Node 25 prefers IPv6 but Neon is only reachable via IPv4 here
-const agent = new Agent({ connect: { family: 4 } } as never)
-neonConfig.fetchFunction = (url: string, init?: RequestInit) =>
-  undiciF(url, { ...(init as Parameters<typeof undiciF>[1]), dispatcher: agent })
-
-const prisma = new PrismaClient({
-  adapter: new PrismaNeonHttp(process.env.DATABASE_URL!, {}),
-})
+/**
+ * generate-seed-sql.ts
+ *
+ * Outputs SQL UPSERT statements for all questions to stdout.
+ * No database connection required — pipe to prisma db execute:
+ *
+ *   npx ts-node --compiler-options '{"module":"CommonJS"}' scripts/generate-seed-sql.ts \
+ *     | npx prisma db execute --stdin
+ */
 
 type Q = {
   id: string
@@ -31,11 +24,8 @@ type Q = {
   notes?: string
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// AGENT INTAKE — 71 questions
-// ─────────────────────────────────────────────────────────────────────────────
+// ─── AGENT INTAKE — 71 questions ─────────────────────────────────────────────
 const agentIntake: Q[] = [
-  // Section 1A — Scored Dimension Items (36)
   { id: "AUT_A1", text: "I perform better when I can decide how to approach my work.", role: "agent", surveyType: "agent_intake", section: "1A", questionType: "likert", dimension: "AUT", isScored: true, required: true, sortOrder: 1, storageTarget: "scored_field" },
   { id: "AUT_A2", text: "I become less engaged when my work is closely monitored or when others define exactly how I should do it.", role: "agent", surveyType: "agent_intake", section: "1A", questionType: "likert", dimension: "AUT", isScored: true, required: true, sortOrder: 2, storageTarget: "scored_field" },
   { id: "AUT_A3", text: "I like being able to choose how I organize my work.", role: "agent", surveyType: "agent_intake", section: "1A", questionType: "likert", dimension: "AUT", isScored: true, required: true, sortOrder: 3, storageTarget: "scored_field" },
@@ -72,37 +62,25 @@ const agentIntake: Q[] = [
   { id: "EI_A4", text: "When I receive criticism — from a client, colleague, or manager — I can engage with it without becoming defensive.", role: "agent", surveyType: "agent_intake", section: "1A", questionType: "likert", dimension: "EI", isScored: true, required: true, sortOrder: 34, storageTarget: "scored_field" },
   { id: "EI_A5", text: "After a stressful interaction I regain emotional balance quickly.", role: "agent", surveyType: "agent_intake", section: "1A", questionType: "likert", dimension: "EI", isScored: true, required: true, sortOrder: 35, storageTarget: "scored_field" },
   { id: "EI_A6", text: "I adjust how I communicate depending on the emotional state of the other person.", role: "agent", surveyType: "agent_intake", section: "1A", questionType: "likert", dimension: "EI", isScored: true, required: true, sortOrder: 36, storageTarget: "scored_field" },
-
-  // Section 1B — Career Context (5)
   { id: "CTX_A1", text: "Years licensed", role: "agent", surveyType: "agent_intake", section: "1B", questionType: "multiple_choice", isScored: false, options: ["1–2", "3–5", "6–10", "10+"], required: true, sortOrder: 37, storageTarget: "raw_json" },
   { id: "CTX_A2", text: "Primary operating role", role: "agent", surveyType: "agent_intake", section: "1B", questionType: "multiple_choice", isScored: false, options: ["Solo agent", "Buyer specialist", "Listing specialist", "Team lead", "Hybrid"], required: true, sortOrder: 38, storageTarget: "raw_json" },
   { id: "CTX_A3", text: "Average annual closed transactions (last 24 months)", role: "agent", surveyType: "agent_intake", section: "1B", questionType: "multiple_choice", isScored: false, options: ["0–5", "6–12", "13–24", "25+"], required: true, sortOrder: 39, storageTarget: "raw_json" },
   { id: "CTX_A4", text: "Primary business model (select up to 2)", role: "agent", surveyType: "agent_intake", section: "1B", questionType: "checkbox", isScored: false, options: ["SOI/referrals", "Online leads", "Sphere + online hybrid", "Open houses", "Farming", "Other"], required: true, sortOrder: 40, storageTarget: "raw_json" },
   { id: "CTX_A5", text: "Before entering real estate, how would you describe the depth of your existing professional network?", role: "agent", surveyType: "agent_intake", section: "1B", questionType: "multiple_choice", isScored: false, options: ["Strong (50+ contacts)", "Moderate (20–50)", "Early stage (fewer than 20)", "Starting from scratch"], required: true, sortOrder: 41, storageTarget: "raw_json" },
-
-  // Section 1C — Unmapped Supplemental (4)
   { id: "UNM_A1", text: "I complete necessary tasks even when motivation is low.", role: "agent", surveyType: "agent_intake", section: "1C", questionType: "likert", isScored: false, required: true, sortOrder: 42, storageTarget: "raw_json", notes: "Supplemental effort/coaching signal" },
   { id: "UNM_A2", text: "When results stall, I adjust process rather than disengage.", role: "agent", surveyType: "agent_intake", section: "1C", questionType: "likert", isScored: false, required: true, sortOrder: 43, storageTarget: "raw_json", notes: "Supplemental effort/coaching signal" },
   { id: "UNM_A3", text: "After receiving direction or coaching, I usually apply it within a short time frame.", role: "agent", surveyType: "agent_intake", section: "1C", questionType: "likert", isScored: false, required: true, sortOrder: 44, storageTarget: "raw_json", notes: "Supplemental effort/coaching signal" },
   { id: "UNM_A4", text: "Even when I don't enjoy certain tasks, I complete them consistently.", role: "agent", surveyType: "agent_intake", section: "1C", questionType: "likert", isScored: false, required: true, sortOrder: 45, storageTarget: "raw_json", notes: "Supplemental effort/coaching signal" },
-
-  // Section 1D — EI Adjacent Unmapped (2)
   { id: "EI_UNM_A1", text: "I adjust my approach when I sense a client is feeling uncomfortable or pressured.", role: "agent", surveyType: "agent_intake", section: "1D", questionType: "likert", isScored: false, required: true, sortOrder: 46, storageTarget: "raw_json", notes: "Client experience proxy — not redundant with scored EI" },
   { id: "EI_UNM_A2", text: "When a deal goes sideways, I first evaluate my own role.", role: "agent", surveyType: "agent_intake", section: "1D", questionType: "likert", isScored: false, required: true, sortOrder: 47, storageTarget: "raw_json", notes: "Client experience proxy — not redundant with scored EI" },
-
-  // Section 1E — Calibrated Confidence (4)
   { id: "CAL_A1", text: "I trust my judgment in business decisions.", role: "agent", surveyType: "agent_intake", section: "1E", questionType: "likert", isScored: false, required: true, sortOrder: 48, storageTarget: "raw_json", notes: "Calibrated Confidence Score — high + low production = overconfidence flag" },
   { id: "CAL_A2", text: "I can clearly explain why my current approach works.", role: "agent", surveyType: "agent_intake", section: "1E", questionType: "likert", isScored: false, required: true, sortOrder: 49, storageTarget: "raw_json", notes: "Calibrated Confidence Score" },
   { id: "CAL_A3", text: "I regularly question assumptions that previously served me.", role: "agent", surveyType: "agent_intake", section: "1E", questionType: "likert", isScored: false, required: true, sortOrder: 50, storageTarget: "raw_json", notes: "Calibrated Confidence Score" },
   { id: "CAL_A4", text: "I distinguish confidence from certainty.", role: "agent", surveyType: "agent_intake", section: "1E", questionType: "likert", isScored: false, required: true, sortOrder: 51, storageTarget: "raw_json", notes: "Calibrated Confidence Score" },
-
-  // Section 1F — Learning & Adaptability (4)
   { id: "LRN_A1", text: "I intentionally study what top performers do differently.", role: "agent", surveyType: "agent_intake", section: "1F", questionType: "likert", isScored: false, required: true, sortOrder: 52, storageTarget: "raw_json", notes: "Predicts adoption of best practices" },
   { id: "LRN_A2", text: "I implement new ideas within 30 days of learning them.", role: "agent", surveyType: "agent_intake", section: "1F", questionType: "likert", isScored: false, required: true, sortOrder: 53, storageTarget: "raw_json", notes: "Predicts adoption of best practices" },
   { id: "LRN_A3", text: "I review performance data (conversion rates, outcomes, patterns).", role: "agent", surveyType: "agent_intake", section: "1F", questionType: "likert", isScored: false, required: true, sortOrder: 54, storageTarget: "raw_json", notes: "Predicts adoption of best practices" },
   { id: "LRN_A4", text: "When I look at my business results, I try to understand what the patterns are telling me.", role: "agent", surveyType: "agent_intake", section: "1F", questionType: "likert", isScored: false, required: true, sortOrder: 55, storageTarget: "raw_json", notes: "Predicts adoption of best practices" },
-
-  // Section 1G — Help-Seeking & Social Connection (7)
   { id: "HLP_A1", text: "I proactively seek support when it improves outcomes.", role: "agent", surveyType: "agent_intake", section: "1G", questionType: "likert", isScored: false, required: true, sortOrder: 56, storageTarget: "raw_json" },
   { id: "HLP_A2", text: "I know where to get help when I'm stuck.", role: "agent", surveyType: "agent_intake", section: "1G", questionType: "likert", isScored: false, required: true, sortOrder: 57, storageTarget: "raw_json" },
   { id: "HLP_A3", text: "I address small problems before they become large ones.", role: "agent", surveyType: "agent_intake", section: "1G", questionType: "likert", isScored: false, required: true, sortOrder: 58, storageTarget: "raw_json" },
@@ -110,28 +88,19 @@ const agentIntake: Q[] = [
   { id: "HLP_A5", text: "When I'm going through a difficult professional period, I naturally reach out to colleagues or mentors rather than working through it alone.", role: "agent", surveyType: "agent_intake", section: "1G", questionType: "likert", isScored: false, required: true, sortOrder: 60, storageTarget: "raw_json" },
   { id: "HLP_A6", text: "Feeling connected to the people I work with is important to my motivation, not just a nice feature of a good job.", role: "agent", surveyType: "agent_intake", section: "1G", questionType: "likert", isScored: false, required: true, sortOrder: 61, storageTarget: "raw_json" },
   { id: "HLP_A7", text: "In my prior professional life, I have consistently maintained meaningful long-term relationships with colleagues even after leaving those roles.", role: "agent", surveyType: "agent_intake", section: "1G", questionType: "likert", isScored: false, required: true, sortOrder: 62, storageTarget: "raw_json" },
-
-  // Section 1H — Business Identity & Ownership (4)
   { id: "BIZ_A1", text: "When making decisions, I think in terms of systems, processes, and long-term sustainability — not just immediate transactions.", role: "agent", surveyType: "agent_intake", section: "1H", questionType: "likert", isScored: false, required: true, sortOrder: 63, storageTarget: "raw_json" },
   { id: "BIZ_A2", text: "What does 'running a business' most mean to you? (select up to 2)", role: "agent", surveyType: "agent_intake", section: "1H", questionType: "checkbox", isScored: false, options: ["Tracking numbers and performance", "Having documented systems", "Managing time intentionally", "Building something scalable", "Being professional and consistent", "Other"], required: true, sortOrder: 64, storageTarget: "raw_json" },
   { id: "BIZ_A3", text: "I make decisions based on long-term trajectory, not short-term income.", role: "agent", surveyType: "agent_intake", section: "1H", questionType: "likert", isScored: false, required: true, sortOrder: 65, storageTarget: "raw_json" },
   { id: "BIZ_A4", text: "My daily actions align with the agent I intend to be in three years.", role: "agent", surveyType: "agent_intake", section: "1H", questionType: "likert", isScored: false, required: true, sortOrder: 66, storageTarget: "raw_json" },
-
-  // Section 1I — Qualitative Signals (3)
   { id: "QST_A1", text: "What currently limits your next level of growth?", role: "agent", surveyType: "agent_intake", section: "1I", questionType: "text", isScored: false, required: false, sortOrder: 67, storageTarget: "qualitative_table" },
   { id: "QST_A2", text: "What part of your business feels most fragile right now?", role: "agent", surveyType: "agent_intake", section: "1I", questionType: "text", isScored: false, required: false, sortOrder: 68, storageTarget: "qualitative_table" },
   { id: "QST_A3", text: "If you wanted to work less while maintaining income, what would need to change?", role: "agent", surveyType: "agent_intake", section: "1I", questionType: "text", isScored: false, required: false, sortOrder: 69, storageTarget: "qualitative_table" },
-
-  // Section 1J — Success Definition (2)
   { id: "SUC_A1", text: "How do you personally define success in real estate? (select up to 3)", role: "agent", surveyType: "agent_intake", section: "1J", questionType: "checkbox", isScored: false, options: ["Consistent income", "Predictable schedule and work-life balance", "Helping clients at a high level", "Long-term sustainability (avoiding burnout)", "Business growth and leverage", "Recognition or status", "Flexibility and autonomy", "Being part of a professional community I value and that values me", "Other"], required: true, sortOrder: 70, storageTarget: "raw_json" },
   { id: "SUC_A2", text: "Based on your definition of success, how do you currently view your prospects for achieving it?", role: "agent", surveyType: "agent_intake", section: "1J", questionType: "scale", isScored: false, options: ["Very unlikely", "Unlikely", "Neither likely nor unlikely", "Likely", "Very likely"], required: true, sortOrder: 71, storageTarget: "raw_json" },
 ]
 
-// ─────────────────────────────────────────────────────────────────────────────
-// BROKER INTAKE — 91 questions
-// ─────────────────────────────────────────────────────────────────────────────
+// ─── BROKER INTAKE — 91 questions ────────────────────────────────────────────
 const brokerIntake: Q[] = [
-  // Section 2A — Scored Dimension Items (36)
   { id: "AUT_B1", text: "This brokerage allows individuals to decide how they approach their work.", role: "broker", surveyType: "broker_intake", section: "2A", questionType: "likert", dimension: "AUT", isScored: true, required: true, sortOrder: 1, storageTarget: "scored_field" },
   { id: "AUT_B2", text: "At this brokerage, agents are not closely monitored on how they do their work — only on outcomes.", role: "broker", surveyType: "broker_intake", section: "2A", questionType: "likert", dimension: "AUT", isScored: true, required: true, sortOrder: 2, storageTarget: "scored_field" },
   { id: "AUT_B3", text: "Individuals here are given discretion in how they organize their responsibilities.", role: "broker", surveyType: "broker_intake", section: "2A", questionType: "likert", dimension: "AUT", isScored: true, required: true, sortOrder: 3, storageTarget: "scored_field" },
@@ -168,30 +137,22 @@ const brokerIntake: Q[] = [
   { id: "EI_B4", text: "Agents here must frequently manage strong emotional reactions from others.", role: "broker", surveyType: "broker_intake", section: "2A", questionType: "likert", dimension: "EI", isScored: true, required: true, sortOrder: 34, storageTarget: "scored_field" },
   { id: "EI_B5", text: "Feedback conversations here can be direct and candid — agents should be prepared for honest assessments of their performance.", role: "broker", surveyType: "broker_intake", section: "2A", questionType: "likert", dimension: "EI", isScored: true, required: true, sortOrder: 35, storageTarget: "scored_field" },
   { id: "EI_B6", text: "The competitive environment here can create interpersonal tension among agents at times.", role: "broker", surveyType: "broker_intake", section: "2A", questionType: "likert", dimension: "EI", isScored: true, required: true, sortOrder: 36, storageTarget: "scored_field" },
-
-  // Section 2B — Organizational Identifiers (6)
   { id: "ORG_B1", text: "Organization Name", role: "broker", surveyType: "broker_intake", section: "2B", questionType: "text", isScored: false, required: true, sortOrder: 37, storageTarget: "raw_json" },
   { id: "ORG_B2", text: "Organization Type", role: "broker", surveyType: "broker_intake", section: "2B", questionType: "multiple_choice", isScored: false, options: ["Brokerage (independent or franchise)", "Team operating within a brokerage", "Expansion team (multi-market)", "Hybrid"], required: true, sortOrder: 38, storageTarget: "raw_json" },
   { id: "ORG_B3", text: "If a Team: Parent Brokerage Name", role: "broker", surveyType: "broker_intake", section: "2B", questionType: "text", isScored: false, required: false, sortOrder: 39, storageTarget: "raw_json", notes: "Conditional on ORG_B2 = Team" },
   { id: "ORG_B4", text: "Primary Market / City", role: "broker", surveyType: "broker_intake", section: "2B", questionType: "text", isScored: false, required: true, sortOrder: 40, storageTarget: "raw_json" },
   { id: "ORG_B5", text: "State", role: "broker", surveyType: "broker_intake", section: "2B", questionType: "multiple_choice", isScored: false, options: ["AL","AK","AZ","AR","CA","CO","CT","DE","FL","GA","HI","ID","IL","IN","IA","KS","KY","LA","ME","MD","MA","MI","MN","MS","MO","MT","NE","NV","NH","NJ","NM","NY","NC","ND","OH","OK","OR","PA","RI","SC","SD","TN","TX","UT","VT","VA","WA","WV","WI","WY"], required: true, sortOrder: 41, storageTarget: "raw_json" },
   { id: "ORG_B6", text: "Approximate Number of Agents", role: "broker", surveyType: "broker_intake", section: "2B", questionType: "multiple_choice", isScored: false, options: ["1–5", "6–15", "16–30", "31–50", "50+"], required: true, sortOrder: 42, storageTarget: "raw_json" },
-
-  // Section 2B — Culture & Identity (4)
   { id: "CUL_B1", text: "Which description best reflects your organization's operating identity?", role: "broker", surveyType: "broker_intake", section: "2B", questionType: "multiple_choice", isScored: false, options: ["Highly entrepreneurial/agent-driven", "Structured with systems and standards", "Training-centric and developmental", "Production-driven/performance-based", "Relationship-based/community-oriented"], required: true, sortOrder: 43, storageTarget: "raw_json" },
   { id: "CUL_B2", text: "How consistent is the culture across agents? (1 = Highly variable, 5 = Very consistent)", role: "broker", surveyType: "broker_intake", section: "2B", questionType: "scale", isScored: false, options: ["Highly variable", "Mostly variable", "Mixed", "Mostly consistent", "Very consistent"], required: true, sortOrder: 44, storageTarget: "raw_json", notes: "DO NOT USE IN CLUSTERING" },
   { id: "CUL_B3", text: "Which values are reinforced in practice? (select up to 3)", role: "broker", surveyType: "broker_intake", section: "2B", questionType: "checkbox", isScored: false, options: ["Autonomy and independence", "Accountability and follow-through", "Consistency and habits", "Collaboration and team support", "Growth and learning", "High standards and professionalism"], required: true, sortOrder: 45, storageTarget: "raw_json" },
   { id: "CUL_B4", text: "Do new agents typically receive the same onboarding experience, or is it adjusted?", role: "broker", surveyType: "broker_intake", section: "2B", questionType: "multiple_choice", isScored: false, options: ["Mostly the same", "Some adjustments", "Highly customized"], required: true, sortOrder: 46, storageTarget: "raw_json" },
-
-  // Section 2B — Authority & Expectations (6)
   { id: "EXP_B1", text: "Who primarily sets expectations for agents?", role: "broker", surveyType: "broker_intake", section: "2B", questionType: "multiple_choice", isScored: false, options: ["Brokerage leadership", "Team leader(s)", "Shared", "Largely self-directed by agents"], required: true, sortOrder: 47, storageTarget: "raw_json" },
   { id: "EXP_B2", text: "How explicitly are expectations communicated to new agents? (1 = Not at all, 5 = Extremely)", role: "broker", surveyType: "broker_intake", section: "2B", questionType: "scale", isScored: false, options: ["Not at all", "Slightly", "Moderately", "Very", "Extremely"], required: true, sortOrder: 48, storageTarget: "raw_json" },
   { id: "EXP_B3", text: "After onboarding, how much structure is required to remain in good standing?", role: "broker", surveyType: "broker_intake", section: "2B", questionType: "multiple_choice", isScored: false, options: ["Minimal", "Moderate", "High"], required: true, sortOrder: 49, storageTarget: "raw_json" },
   { id: "EXP_B4", text: "Clear activity or performance standards are expected of agents.", role: "broker", surveyType: "broker_intake", section: "2B", questionType: "likert", isScored: false, required: true, sortOrder: 50, storageTarget: "raw_json" },
   { id: "EXP_B5", text: "Systems and processes are consistently enforced.", role: "broker", surveyType: "broker_intake", section: "2B", questionType: "likert", isScored: false, required: true, sortOrder: 51, storageTarget: "raw_json" },
   { id: "EXP_B6", text: "Expectations are applied similarly across agents.", role: "broker", surveyType: "broker_intake", section: "2B", questionType: "likert", isScored: false, required: true, sortOrder: 52, storageTarget: "raw_json" },
-
-  // Section 2B — Training & Onboarding (7)
   { id: "TRN_B1", text: "Is there a formal onboarding process?", role: "broker", surveyType: "broker_intake", section: "2B", questionType: "yes_no", isScored: false, required: true, sortOrder: 53, storageTarget: "raw_json" },
   { id: "TRN_B2", text: "Who owns onboarding and training delivery?", role: "broker", surveyType: "broker_intake", section: "2B", questionType: "multiple_choice", isScored: false, options: ["Brokerage", "Team", "Shared", "External or third-party"], required: false, sortOrder: 54, storageTarget: "raw_json", notes: "Conditional on TRN_B1 = Yes" },
   { id: "TRN_B3", text: "How structured is onboarding in practice? (1 = Not at all, 5 = Highly)", role: "broker", surveyType: "broker_intake", section: "2B", questionType: "scale", isScored: false, options: ["Not at all", "Slightly", "Moderately", "Very", "Highly"], required: true, sortOrder: 55, storageTarget: "raw_json" },
@@ -199,28 +160,20 @@ const brokerIntake: Q[] = [
   { id: "TRN_B5", text: "Percentage of new agents actively participating in training during first 90 days?", role: "broker", surveyType: "broker_intake", section: "2B", questionType: "multiple_choice", isScored: false, options: ["Most (75%+)", "About half", "A small minority"], required: true, sortOrder: 57, storageTarget: "raw_json" },
   { id: "TRN_B6", text: "Percentage of experienced agents actively participating in ongoing training?", role: "broker", surveyType: "broker_intake", section: "2B", questionType: "multiple_choice", isScored: false, options: ["Most (75%+)", "About half", "A small minority", "Very few", "Not applicable"], required: true, sortOrder: 58, storageTarget: "raw_json" },
   { id: "TRN_B7", text: "Is participation in training mandatory, optional, or role-dependent?", role: "broker", surveyType: "broker_intake", section: "2B", questionType: "multiple_choice", isScored: false, options: ["Mandatory for all", "Mandatory for new agents only", "Optional but encouraged", "Entirely self-directed"], required: true, sortOrder: 59, storageTarget: "raw_json" },
-
-  // Section 2B — Social Infrastructure (3)
   { id: "SOC_B1", text: "How often do agents interact in non-transaction-specific ways?", role: "broker", surveyType: "broker_intake", section: "2B", questionType: "multiple_choice", isScored: false, options: ["Rarely or never", "Occasionally", "Weekly", "Daily", "It's a core part of our culture"], required: true, sortOrder: 60, storageTarget: "raw_json" },
   { id: "SOC_B2", text: "When a new agent joins, how quickly do they typically form a meaningful professional relationship?", role: "broker", surveyType: "broker_intake", section: "2B", questionType: "multiple_choice", isScored: false, options: ["Within first week", "Within first month", "Within 90 days", "It varies", "We don't track this"], required: true, sortOrder: 61, storageTarget: "raw_json" },
   { id: "SOC_B3", text: "Does your organization have a mentorship structure for new agents?", role: "broker", surveyType: "broker_intake", section: "2B", questionType: "multiple_choice", isScored: false, options: ["Formal program", "Informal but common", "Occasional but not structured", "Rarely happens", "No"], required: true, sortOrder: 62, storageTarget: "raw_json" },
-
-  // Section 2B — Accountability Structure (6)
   { id: "ACC_B1", text: "Who primarily provides accountability?", role: "broker", surveyType: "broker_intake", section: "2B", questionType: "multiple_choice", isScored: false, options: ["Brokerage leadership", "Team leadership", "Peer accountability", "Agent self-accountability"], required: true, sortOrder: 63, storageTarget: "raw_json", notes: "DO NOT USE FOR TRAIT INDICATORS" },
   { id: "ACC_B2", text: "How often are agents proactively reviewed for progress?", role: "broker", surveyType: "broker_intake", section: "2B", questionType: "multiple_choice", isScored: false, options: ["Weekly", "Monthly", "Quarterly", "Only when issues arise", "Rarely or never"], required: true, sortOrder: 64, storageTarget: "raw_json", notes: "DO NOT USE FOR TRAIT INDICATORS" },
   { id: "ACC_B3", text: "Accountability conversations focus on improvement and learning.", role: "broker", surveyType: "broker_intake", section: "2B", questionType: "likert", isScored: false, required: true, sortOrder: 65, storageTarget: "raw_json" },
   { id: "ACC_B4", text: "Consequences are predictable and transparent.", role: "broker", surveyType: "broker_intake", section: "2B", questionType: "likert", isScored: false, required: true, sortOrder: 66, storageTarget: "raw_json" },
   { id: "ACC_B5", text: "Accountability is applied consistently across agents.", role: "broker", surveyType: "broker_intake", section: "2B", questionType: "likert", isScored: false, required: true, sortOrder: 67, storageTarget: "raw_json" },
   { id: "ACC_B6", text: "Accountability feels primarily punitive.", role: "broker", surveyType: "broker_intake", section: "2B", questionType: "likert", isScored: false, required: true, sortOrder: 68, storageTarget: "raw_json", notes: "REVERSE SCORED" },
-
-  // Section 2B — Leadership Response Style / Autonomy Support (5)
   { id: "AUS_B1", text: "When agents struggle, how often does leadership help agents problem-solve and choose next steps?", role: "broker", surveyType: "broker_intake", section: "2B", questionType: "likert", isScored: false, required: true, sortOrder: 69, storageTarget: "raw_json" },
   { id: "AUS_B2", text: "When agents struggle, how often does leadership clarify expectations and available options without prescribing the solution?", role: "broker", surveyType: "broker_intake", section: "2B", questionType: "likert", isScored: false, required: true, sortOrder: 70, storageTarget: "raw_json" },
   { id: "AUS_B3", text: "When agents struggle, how often does leadership encourage agents to retain ownership of decisions?", role: "broker", surveyType: "broker_intake", section: "2B", questionType: "likert", isScored: false, required: true, sortOrder: 71, storageTarget: "raw_json" },
   { id: "AUS_B4", text: "When agents struggle, how often does leadership increase oversight or requirements?", role: "broker", surveyType: "broker_intake", section: "2B", questionType: "likert", isScored: false, required: true, sortOrder: 72, storageTarget: "raw_json" },
   { id: "AUS_B5", text: "When agents struggle, how often does leadership reduce flexibility or privileges?", role: "broker", surveyType: "broker_intake", section: "2B", questionType: "likert", isScored: false, required: true, sortOrder: 73, storageTarget: "raw_json" },
-
-  // Section 2B — Psychological Safety & Coaching Quality (7)
   { id: "PSY_B1", text: "Agents feel safe asking for help before problems become serious.", role: "broker", surveyType: "broker_intake", section: "2B", questionType: "likert", isScored: false, required: true, sortOrder: 74, storageTarget: "raw_json" },
   { id: "PSY_B2", text: "Feedback is delivered in a way that preserves dignity and respect.", role: "broker", surveyType: "broker_intake", section: "2B", questionType: "likert", isScored: false, required: true, sortOrder: 75, storageTarget: "raw_json" },
   { id: "PSY_B3", text: "Struggling agents are treated with support rather than judgment.", role: "broker", surveyType: "broker_intake", section: "2B", questionType: "likert", isScored: false, required: true, sortOrder: 76, storageTarget: "raw_json" },
@@ -228,30 +181,20 @@ const brokerIntake: Q[] = [
   { id: "PSY_B5", text: "Coaching focuses on skill-building, not just results.", role: "broker", surveyType: "broker_intake", section: "2B", questionType: "likert", isScored: false, required: true, sortOrder: 78, storageTarget: "raw_json" },
   { id: "PSY_B6", text: "Agents leave coaching interactions feeling more capable.", role: "broker", surveyType: "broker_intake", section: "2B", questionType: "likert", isScored: false, required: true, sortOrder: 79, storageTarget: "raw_json" },
   { id: "PSY_B7", text: "Systems are explained with purpose, not just enforced.", role: "broker", surveyType: "broker_intake", section: "2B", questionType: "likert", isScored: false, required: true, sortOrder: 80, storageTarget: "raw_json" },
-
-  // Section 2B — Attrition & Success Patterns (2)
   { id: "ATT_B1", text: "Estimated percentage of new agents still active after 12 months", role: "broker", surveyType: "broker_intake", section: "2B", questionType: "multiple_choice", isScored: false, options: ["Under 25%", "25–50%", "50–75%", "Over 75%"], required: true, sortOrder: 81, storageTarget: "raw_json" },
   { id: "ATT_B2", text: "Primary reasons agents struggle or exit (select up to 3)", role: "broker", surveyType: "broker_intake", section: "2B", questionType: "checkbox", isScored: false, options: ["Unrealistic expectations", "Lack of consistent effort", "Financial pressure", "Time management issues", "Poor cultural fit", "Resistance to structure or accountability"], required: true, sortOrder: 82, storageTarget: "raw_json" },
-
-  // Section 2B — Success Definition (4)
   { id: "SUC_B1", text: "Which indicators most define a 'successful agent' in your organization? Rank in order.", role: "broker", surveyType: "broker_intake", section: "2B", questionType: "rank", isScored: false, options: ["Consistent transaction volume", "Consistent daily activity and habits", "Income stability", "Client satisfaction and referrals", "Professionalism and compliance", "Team contribution", "Growth trajectory over time"], required: true, sortOrder: 83, storageTarget: "raw_json" },
   { id: "SUC_B2", text: "At what point would you consider an agent 'successful' in a basic sense?", role: "broker", surveyType: "broker_intake", section: "2B", questionType: "multiple_choice", isScored: false, options: ["Actively producing regardless of volume", "Covering personal expenses", "Closing consistently each quarter", "Hitting defined benchmarks", "Only top-tier producers"], required: true, sortOrder: 84, storageTarget: "raw_json" },
   { id: "SUC_B3", text: "Which matters more in evaluating success at the 12–18 month mark?", role: "broker", surveyType: "broker_intake", section: "2B", questionType: "multiple_choice", isScored: false, options: ["Current production level", "Trajectory and momentum", "Consistency of habits", "Long-term potential", "It depends on the agent"], required: true, sortOrder: 85, storageTarget: "raw_json" },
   { id: "SUC_B4", text: "Where do agents most often misunderstand how success is evaluated here?", role: "broker", surveyType: "broker_intake", section: "2B", questionType: "multiple_choice", isScored: false, options: ["Overestimate importance of production", "Underestimate importance of habits", "Assume support is unconditional", "Expect faster results", "Misread cultural expectations"], required: true, sortOrder: 86, storageTarget: "raw_json" },
-
-  // Section 2B — Agent Fit Profile (3)
   { id: "FIT_B1", text: "Which agent profile thrives most in your organization?", role: "broker", surveyType: "broker_intake", section: "2B", questionType: "multiple_choice", isScored: false, options: ["Highly self-motivated and independent", "Coachable and systems-oriented", "Relationship-focused and patient", "Competitive and performance-driven", "Role-specific team contributor"], required: true, sortOrder: 87, storageTarget: "raw_json" },
   { id: "FIT_B2", text: "Which agent profile struggles most in your organization?", role: "broker", surveyType: "broker_intake", section: "2B", questionType: "multiple_choice", isScored: false, options: ["Highly self-motivated and independent", "Coachable and systems-oriented", "Relationship-focused and patient", "Competitive and performance-driven", "Role-specific team contributor"], required: true, sortOrder: 88, storageTarget: "raw_json" },
   { id: "FIT_B3", text: "How tolerant is your organization of slower-ramp agents?", role: "broker", surveyType: "broker_intake", section: "2B", questionType: "likert", isScored: false, required: true, sortOrder: 89, storageTarget: "raw_json" },
-
-  // Section 2B — Calibration & Reality Check (2)
   { id: "CAL_B1", text: "Where is the biggest gap between agent expectations and reality at your brokerage?", role: "broker", surveyType: "broker_intake", section: "2B", questionType: "text", isScored: false, required: false, sortOrder: 90, storageTarget: "qualitative_table" },
   { id: "CAL_B2", text: "If an agent fails here, what is the most common cause?", role: "broker", surveyType: "broker_intake", section: "2B", questionType: "multiple_choice", isScored: false, options: ["Poor fit", "Lack of effort", "Lack of structure", "Lack of support", "External factors"], required: true, sortOrder: 91, storageTarget: "raw_json" },
 ]
 
-// ─────────────────────────────────────────────────────────────────────────────
-// AGENT 90-DAY CHECK-IN — 16 questions
-// ─────────────────────────────────────────────────────────────────────────────
+// ─── AGENT 90-DAY CHECK-IN — 16 questions ────────────────────────────────────
 const agent90Day: Q[] = [
   { id: "AG90_A1", text: "Compared to when I started, my daily routines are more consistent.", role: "agent", surveyType: "agent_90_day", section: "Routines", questionType: "likert", isScored: false, required: true, sortOrder: 1, storageTarget: "raw_json" },
   { id: "AG90_A2", text: "I have adopted at least one repeatable system that I did not have at the beginning.", role: "agent", surveyType: "agent_90_day", section: "Routines", questionType: "likert", isScored: false, required: true, sortOrder: 2, storageTarget: "raw_json" },
@@ -271,9 +214,7 @@ const agent90Day: Q[] = [
   { id: "PIE_A4", text: "This allocation reflects how I want my business to operate.", role: "agent", surveyType: "agent_90_day", section: "Time", questionType: "likert", isScored: false, required: true, sortOrder: 16, storageTarget: "raw_json" },
 ]
 
-// ─────────────────────────────────────────────────────────────────────────────
-// AGENT 180-DAY CHECK-IN — 12 questions
-// ─────────────────────────────────────────────────────────────────────────────
+// ─── AGENT 180-DAY CHECK-IN — 12 questions ───────────────────────────────────
 const agent180Day: Q[] = [
   { id: "AG180_A1", text: "The routines and systems I adopted earlier are still in place.", role: "agent", surveyType: "agent_180_day", section: "Sustained", questionType: "likert", isScored: false, required: true, sortOrder: 1, storageTarget: "raw_json" },
   { id: "AG180_A2", text: "My workdays feel more structured than they did at the beginning.", role: "agent", surveyType: "agent_180_day", section: "Sustained", questionType: "likert", isScored: false, required: true, sortOrder: 2, storageTarget: "raw_json" },
@@ -289,9 +230,7 @@ const agent180Day: Q[] = [
   { id: "AG180_I2", text: "What, if anything, makes you question your long-term fit right now?", role: "agent", surveyType: "agent_180_day", section: "Qualitative", questionType: "text", isScored: false, required: false, sortOrder: 12, storageTarget: "qualitative_table" },
 ]
 
-// ─────────────────────────────────────────────────────────────────────────────
-// BROKER 90-DAY EVALUATION — 29 questions
-// ─────────────────────────────────────────────────────────────────────────────
+// ─── BROKER 90-DAY EVALUATION — 29 questions ─────────────────────────────────
 const broker90Day: Q[] = [
   { id: "BK90_B1", text: "How consistently has this agent shown up prepared and on time?", role: "broker", surveyType: "broker_90_day", section: "Engagement", questionType: "likert", isScored: false, required: true, sortOrder: 1, storageTarget: "raw_json" },
   { id: "BK90_B2", text: "When this agent commits to an action, how reliably do they follow through?", role: "broker", surveyType: "broker_90_day", section: "Engagement", questionType: "likert", isScored: false, required: true, sortOrder: 2, storageTarget: "raw_json" },
@@ -324,9 +263,7 @@ const broker90Day: Q[] = [
   { id: "BK90_H3", text: "Any patterns, circumstances, or observations not captured above?", role: "broker", surveyType: "broker_90_day", section: "Observations", questionType: "text", isScored: false, required: false, sortOrder: 29, storageTarget: "qualitative_table" },
 ]
 
-// ─────────────────────────────────────────────────────────────────────────────
-// BROKER 180-DAY — 6 additional questions (reuses broker_90_day in app logic)
-// ─────────────────────────────────────────────────────────────────────────────
+// ─── BROKER 180-DAY — 6 questions ────────────────────────────────────────────
 const broker180Day: Q[] = [
   { id: "BK180_G3", text: "Compared to 90 days ago, this agent's engagement with the people and community of this brokerage has:", role: "broker", surveyType: "broker_180_day", section: "Trajectory", questionType: "multiple_choice", isScored: false, options: ["Decreased", "Stayed the same", "Increased", "Significantly increased"], required: true, sortOrder: 30, storageTarget: "raw_json" },
   { id: "BK180_G4", text: "Compared to the 90-day mark, this agent's overall trajectory (behavior, consistency, and results) is:", role: "broker", surveyType: "broker_180_day", section: "Trajectory", questionType: "multiple_choice", isScored: false, options: ["Declining", "Flat", "Improving", "Breakthrough"], required: true, sortOrder: 31, storageTarget: "raw_json" },
@@ -345,50 +282,52 @@ const allQuestions: Q[] = [
   ...broker180Day,
 ]
 
-async function main() {
-  for (const q of allQuestions) {
-    await prisma.question.upsert({
-      where: { id: q.id },
-      update: {
-        text: q.text,
-        role: q.role,
-        surveyType: q.surveyType,
-        section: q.section,
-        questionType: q.questionType,
-        dimension: q.dimension ?? null,
-        isScored: q.isScored,
-        options: q.options ?? Prisma.JsonNull,
-        required: q.required,
-        sortOrder: q.sortOrder,
-        storageTarget: q.storageTarget,
-        notes: q.notes ?? null,
-      },
-      create: {
-        id: q.id,
-        text: q.text,
-        role: q.role,
-        surveyType: q.surveyType,
-        section: q.section,
-        questionType: q.questionType,
-        dimension: q.dimension ?? null,
-        isScored: q.isScored,
-        options: q.options ?? Prisma.JsonNull,
-        required: q.required,
-        sortOrder: q.sortOrder,
-        storageTarget: q.storageTarget,
-        notes: q.notes ?? null,
-      },
-    })
-  }
-  console.log(`Seeded ${allQuestions.length} questions.`)
-  console.log(`  agent_intake: ${agentIntake.length}`)
-  console.log(`  broker_intake: ${brokerIntake.length}`)
-  console.log(`  agent_90_day: ${agent90Day.length}`)
-  console.log(`  agent_180_day: ${agent180Day.length}`)
-  console.log(`  broker_90_day: ${broker90Day.length}`)
-  console.log(`  broker_180_day: ${broker180Day.length}`)
+// ─── SQL generator ────────────────────────────────────────────────────────────
+
+function esc(s: string | undefined | null): string {
+  if (s == null) return "NULL"
+  return `'${s.replace(/'/g, "''")}'`
 }
 
-main()
-  .catch((e) => { console.error(e); process.exit(1) })
-  .finally(() => prisma.$disconnect())
+function escBool(b: boolean): string {
+  return b ? "TRUE" : "FALSE"
+}
+
+function escJson(arr: string[] | undefined | null): string {
+  if (arr == null) return "NULL"
+  return `'${JSON.stringify(arr).replace(/'/g, "''")}'::jsonb`
+}
+
+const cols = `"id","text","role","surveyType","section","questionType","dimension","isScored","options","required","sortOrder","storageTarget","notes"`
+
+const lines: string[] = []
+
+for (const q of allQuestions) {
+  const vals = [
+    esc(q.id),
+    esc(q.text),
+    `'${q.role}'::"Role"`,
+    esc(q.surveyType),
+    esc(q.section),
+    esc(q.questionType),
+    esc(q.dimension ?? null),
+    escBool(q.isScored),
+    escJson(q.options ?? null),
+    escBool(q.required),
+    String(q.sortOrder),
+    esc(q.storageTarget),
+    esc(q.notes ?? null),
+  ].join(",")
+
+  lines.push(
+    `INSERT INTO "Question" (${cols}) VALUES (${vals}) ` +
+    `ON CONFLICT ("id") DO UPDATE SET ` +
+    `"text"=EXCLUDED."text","role"=EXCLUDED."role","surveyType"=EXCLUDED."surveyType",` +
+    `"section"=EXCLUDED."section","questionType"=EXCLUDED."questionType","dimension"=EXCLUDED."dimension",` +
+    `"isScored"=EXCLUDED."isScored","options"=EXCLUDED."options","required"=EXCLUDED."required",` +
+    `"sortOrder"=EXCLUDED."sortOrder","storageTarget"=EXCLUDED."storageTarget","notes"=EXCLUDED."notes";`
+  )
+}
+
+process.stdout.write(lines.join("\n") + "\n")
+process.stderr.write(`Generated ${lines.length} UPSERT statements.\n`)

@@ -1,38 +1,30 @@
 "use client"
 import { useState } from "react"
-import type { SurveyQuestion } from "./SurveyItemRenderer"
+
+export interface StepInfo {
+  id: string
+  answered: boolean
+}
 
 interface Props {
-  questions: SurveyQuestion[]
-  answers: Record<string, string>
+  steps: StepInfo[]
   current: number
-  onJump: (index: number) => void
+  onJump: (globalIndex: number) => void
   onShowAll: () => void
 }
 
-export function SurveyProgressBar({ questions, answers, current, onJump, onShowAll }: Props) {
+export function SurveyProgressBar({ steps, current, onJump, onShowAll }: Props) {
   const [pillHovered, setPillHovered] = useState(false)
-  const total = questions.length
-
-  function isAnswered(q: SurveyQuestion) {
-    const a = answers[q.id]
-    if (!a) return false
-    if (q.questionType === "checkbox" || q.questionType === "rank") {
-      try { return JSON.parse(a).length > 0 } catch { return false }
-    }
-    return a.trim() !== ""
-  }
+  const total = steps.length
 
   return (
     <div className="w-full mt-5 px-2">
       {/* Horizontal track */}
       <div className="relative mx-4" style={{ height: 28 }}>
-        {/* Track line */}
         <div
           className="absolute left-0 right-0 bg-white/25 rounded-full"
           style={{ top: "50%", height: 2, transform: "translateY(-50%)" }}
         />
-        {/* Answered fill */}
         <div
           className="absolute left-0 bg-[#4caf50]/50 rounded-full transition-all duration-300"
           style={{
@@ -43,18 +35,16 @@ export function SurveyProgressBar({ questions, answers, current, onJump, onShowA
           }}
         />
 
-        {/* Dots */}
-        {questions.map((q, i) => {
+        {steps.map((step, i) => {
           const pct = total > 1 ? (i / (total - 1)) * 100 : 50
-          const answered = isAnswered(q)
           const isCurrent = i === current
           const isPast = i < current
 
           return (
             <button
-              key={q.id}
+              key={step.id}
               onClick={() => onJump(i)}
-              title={`Q${i + 1}`}
+              title={`${i + 1}`}
               style={{
                 position: "absolute",
                 left: `${pct}%`,
@@ -69,7 +59,7 @@ export function SurveyProgressBar({ questions, answers, current, onJump, onShowA
                   className="block rounded-full bg-white"
                   style={{ width: 18, height: 18, boxShadow: "0 0 0 3px white", border: "2.5px solid #1a73e8" }}
                 />
-              ) : answered ? (
+              ) : step.answered ? (
                 <span className="block rounded-full bg-[#4caf50]" style={{ width: 10, height: 10 }} />
               ) : isPast ? (
                 <span className="block rounded-full bg-[#e53e3e]" style={{ width: 8, height: 8 }} />

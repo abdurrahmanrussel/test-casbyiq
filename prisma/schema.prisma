@@ -12,18 +12,27 @@ enum Role {
   broker
 }
 
+enum InvitationStatus {
+  pending
+  accepted
+  declined
+}
+
 model User {
-  id              String           @id @default(uuid())
-  email           String           @unique
-  passwordHash    String
-  role            Role
-  surveyCompleted Boolean          @default(false)
-  createdAt       DateTime         @default(now())
-  brokerId        String?
+  id                 String           @id @default(uuid())
+  email              String           @unique
+  passwordHash       String
+  role               Role
+  surveyCompleted    Boolean          @default(false)
+  emailVerified      Boolean          @default(false)
+  emailVerifyToken   String?          @unique
+  createdAt          DateTime         @default(now())
+  brokerId           String?
   broker          User?            @relation("BrokerAgents", fields: [brokerId], references: [id])
   agents          User[]           @relation("BrokerAgents")
-  surveyResponses SurveyResponse[]
-  scoreResult     ScoreResult?
+  surveyResponses    SurveyResponse[]
+  scoreResult        ScoreResult?
+  sentInvitations    BrokerInvitation[] @relation("BrokerSentInvitations")
 }
 
 model Question {
@@ -51,6 +60,19 @@ model SurveyResponse {
   createdAt  DateTime @default(now())
 
   @@unique([userId, questionId])
+}
+
+model BrokerInvitation {
+  id         String           @id @default(uuid())
+  brokerId   String
+  broker     User             @relation("BrokerSentInvitations", fields: [brokerId], references: [id])
+  agentEmail String
+  token      String           @unique @default(uuid())
+  status     InvitationStatus @default(pending)
+  createdAt  DateTime         @default(now())
+  expiresAt  DateTime
+
+  @@unique([brokerId, agentEmail])
 }
 
 model ScoreResult {

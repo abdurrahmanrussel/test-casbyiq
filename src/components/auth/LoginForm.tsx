@@ -1,7 +1,7 @@
 "use client"
 import { useState } from "react"
 import { signIn } from "next-auth/react"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import Link from "next/link"
 
 export function LoginForm() {
@@ -11,8 +11,12 @@ export function LoginForm() {
   const [loading, setLoading] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
   const router = useRouter()
+  const searchParams = useSearchParams()
 
-  async function handleSubmit(e: React.FormEvent) {
+  const verified = searchParams.get("verified") === "true"
+  const invalidToken = searchParams.get("error") === "invalid_token"
+
+  async function handleSubmit(e: React.BaseSyntheticEvent) {
     e.preventDefault()
     if (!email) { setError("Email is required"); return }
     if (!password) { setError("Password is required"); return }
@@ -23,16 +27,47 @@ export function LoginForm() {
     const res = await signIn("credentials", { email, password, redirect: false })
     setLoading(false)
 
-    if (res?.error) {
-      setError("Invalid email or password. Please try again.")
+    if (!res?.ok) {
+      if (res?.code === "no_account") {
+        setError("No account found with that email address.")
+      } else if (res?.code === "wrong_password") {
+        setError("Incorrect password. Please try again.")
+      } else if (res?.code === "unverified_email") {
+        setError("Please verify your email address before signing in. Check your inbox.")
+      } else {
+        setError("Sign in failed. Please try again.")
+      }
     } else {
-      router.push("/onboarding/survey")  // middleware redirects to dashboard if already completed
+      router.push("/onboarding/survey")
       router.refresh()
     }
   }
 
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
+
+      {/* Verified banner */}
+      {verified && (
+        <div className="flex items-center gap-2.5 rounded-xl px-4 py-3 text-sm font-medium"
+             style={{ backgroundColor: "#f0fdf4", color: "#166534", border: "1px solid #bbf7d0" }}>
+          <svg width="15" height="15" fill="currentColor" viewBox="0 0 20 20">
+            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd"/>
+          </svg>
+          Email verified! You can now sign in.
+        </div>
+      )}
+
+      {/* Invalid token banner */}
+      {invalidToken && (
+        <div className="flex items-center gap-2.5 rounded-xl px-4 py-3 text-sm font-medium"
+             style={{ backgroundColor: "#fff1f1", color: "#c0392b", border: "1px solid #fecaca" }}>
+          <svg width="15" height="15" fill="currentColor" viewBox="0 0 20 20">
+            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm-.75-5.25a.75.75 0 001.5 0v-4a.75.75 0 00-1.5 0v4zm.75 2.5a1 1 0 100-2 1 1 0 000 2z" clipRule="evenodd"/>
+          </svg>
+          Invalid or expired verification link.
+        </div>
+      )}
+
       {/* Email */}
       <div className="fade-up fade-up-2">
         <label className="block text-xs font-semibold uppercase tracking-widest mb-2"

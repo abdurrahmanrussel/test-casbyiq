@@ -9,13 +9,24 @@ type Agent = {
   surveyCompleted: boolean
 }
 
-export function ManageAgents({ agents }: { agents: Agent[] }) {
+type PendingInvitation = {
+  id: string
+  agentEmail: string
+}
+
+export function ManageAgents({
+  agents,
+  pendingInvitations,
+}: {
+  agents: Agent[]
+  pendingInvitations: PendingInvitation[]
+}) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const [email, setEmail] = useState("")
   const [message, setMessage] = useState<{ type: "ok" | "err"; text: string } | null>(null)
 
-  async function handleAdd(e: React.FormEvent) {
+  async function handleAdd(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
     setMessage(null)
     const res = await fetch("/api/broker/add-agent", {
@@ -25,11 +36,11 @@ export function ManageAgents({ agents }: { agents: Agent[] }) {
     })
     const data = await res.json()
     if (res.ok) {
-      setMessage({ type: "ok", text: "Agent added." })
+      setMessage({ type: "ok", text: "Invitation sent." })
       setEmail("")
       startTransition(() => router.refresh())
     } else {
-      setMessage({ type: "err", text: data.error ?? "Failed to add agent." })
+      setMessage({ type: "err", text: data.error ?? "Failed to send invitation." })
     }
   }
 
@@ -66,7 +77,7 @@ export function ManageAgents({ agents }: { agents: Agent[] }) {
           disabled={isPending}
           style={{ fontSize: 13, padding: "7px 16px", border: "1px solid rgba(0,0,0,0.14)", borderRadius: 6, background: "#1a1916", color: "#fff", cursor: "pointer", fontFamily: "inherit" }}
         >
-          Add
+          Invite
         </button>
       </form>
 
@@ -76,27 +87,54 @@ export function ManageAgents({ agents }: { agents: Agent[] }) {
         </div>
       )}
 
-      {agents.length === 0 ? (
-        <div style={{ fontSize: 13, color: "#9c9b97" }}>No agents linked yet.</div>
-      ) : (
-        <ul style={{ listStyle: "none", display: "flex", flexDirection: "column", gap: 6 }}>
-          {agents.map(agent => (
-            <li key={agent.id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", fontSize: 13, color: "#1a1916" }}>
-              <span>
-                {agent.email}
-                <span style={{ marginLeft: 8, fontSize: 11, color: agent.surveyCompleted ? "#2A5200" : "#9c9b97" }}>
-                  {agent.surveyCompleted ? "Survey complete" : "Pending"}
+      {pendingInvitations.length > 0 && (
+        <div style={{ marginBottom: 12 }}>
+          <div style={{ fontSize: 11, fontWeight: 600, color: "#9c9b97", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 6 }}>
+            Pending invitations
+          </div>
+          <ul style={{ listStyle: "none", display: "flex", flexDirection: "column", gap: 5 }}>
+            {pendingInvitations.map(inv => (
+              <li key={inv.id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", fontSize: 13, color: "#1a1916" }}>
+                <span>
+                  {inv.agentEmail}
+                  <span style={{ marginLeft: 8, fontSize: 11, color: "#BA7517" }}>Awaiting response</span>
                 </span>
-              </span>
-              <button
-                onClick={() => handleRemove(agent.id)}
-                style={{ fontSize: 11, color: "#E24B4A", background: "none", border: "none", cursor: "pointer", fontFamily: "inherit" }}
-              >
-                Remove
-              </button>
-            </li>
-          ))}
-        </ul>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {agents.length > 0 && (
+        <div>
+          {pendingInvitations.length > 0 && (
+            <div style={{ fontSize: 11, fontWeight: 600, color: "#9c9b97", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 6 }}>
+              Linked agents
+            </div>
+          )}
+          <ul style={{ listStyle: "none", display: "flex", flexDirection: "column", gap: 6 }}>
+            {agents.map(agent => (
+              <li key={agent.id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", fontSize: 13, color: "#1a1916" }}>
+                <span>
+                  {agent.email}
+                  <span style={{ marginLeft: 8, fontSize: 11, color: agent.surveyCompleted ? "#2A5200" : "#9c9b97" }}>
+                    {agent.surveyCompleted ? "Survey complete" : "Survey pending"}
+                  </span>
+                </span>
+                <button
+                  onClick={() => handleRemove(agent.id)}
+                  style={{ fontSize: 11, color: "#E24B4A", background: "none", border: "none", cursor: "pointer", fontFamily: "inherit" }}
+                >
+                  Remove
+                </button>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {agents.length === 0 && pendingInvitations.length === 0 && (
+        <div style={{ fontSize: 13, color: "#9c9b97" }}>No agents yet. Send an invitation above.</div>
       )}
     </div>
   )

@@ -1,7 +1,19 @@
-import NextAuth from "next-auth"
+import NextAuth, { CredentialsSignin } from "next-auth"
 import Credentials from "next-auth/providers/credentials"
 import { prisma } from "@/lib/prisma"
 import bcrypt from "bcryptjs"
+
+class NoAccountError extends CredentialsSignin {
+  code = "no_account"
+}
+
+class WrongPasswordError extends CredentialsSignin {
+  code = "wrong_password"
+}
+
+class UnverifiedEmailError extends CredentialsSignin {
+  code = "unverified_email"
+}
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   providers: [
@@ -15,12 +27,13 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         const user = await prisma.user.findUnique({
           where: { email: credentials.email as string },
         })
-        if (!user) return null
+        if (!user) throw new NoAccountError()
         const valid = await bcrypt.compare(
           credentials.password as string,
           user.passwordHash
         )
-        if (!valid) return null
+        if (!valid) throw new WrongPasswordError()
+        if (!user.emailVerified) throw new UnverifiedEmailError()
         return {
           id: user.id,
           email: user.email,

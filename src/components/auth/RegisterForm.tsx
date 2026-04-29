@@ -1,7 +1,5 @@
 "use client"
 import { useState } from "react"
-import { signIn } from "next-auth/react"
-import { useRouter } from "next/navigation"
 import Link from "next/link"
 
 const ROLES = [
@@ -38,9 +36,9 @@ export function RegisterForm() {
   const [error, setError] = useState("")
   const [loading, setLoading] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
-  const router = useRouter()
+  const [verifyPending, setVerifyPending] = useState(false)
 
-  async function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
     if (!email || !password) { setError("All fields are required"); return }
     if (password.length < 8) { setError("Password must be at least 8 characters"); return }
@@ -61,9 +59,29 @@ export function RegisterForm() {
       return
     }
 
-    await signIn("credentials", { email, password, redirect: false })
-    router.push("/onboarding/survey")
-    router.refresh()
+    setVerifyPending(true)
+    setLoading(false)
+  }
+
+  if (verifyPending) {
+    return (
+      <div style={{ textAlign: "center" }}>
+        <div style={{ fontSize: 40, marginBottom: 16 }}>✉️</div>
+        <div style={{ fontSize: 16, fontWeight: 600, color: "#0b1426", marginBottom: 8 }}>
+          Check your email
+        </div>
+        <div style={{ fontSize: 14, color: "#6b7a99", lineHeight: 1.6, marginBottom: 24 }}>
+          We sent a verification link to <strong style={{ color: "#0b1426" }}>{email}</strong>.<br />
+          Click the link to activate your account.
+        </div>
+        <p className="text-sm" style={{ color: "#6b7a99" }}>
+          Already verified?{" "}
+          <Link href="/login" className="font-semibold" style={{ color: "#1a73e8" }}>
+            Sign in
+          </Link>
+        </p>
+      </div>
+    )
   }
 
   return (

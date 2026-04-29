@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server"
 import { auth } from "@/auth"
 import { prisma } from "@/lib/prisma"
+import { sendInvitationEmail } from "@/lib/email"
 
 export async function POST(req: Request) {
   const session = await auth()
@@ -29,10 +30,22 @@ export async function POST(req: Request) {
   if (agent.brokerId && agent.brokerId !== session.user.id) {
     return NextResponse.json({ error: "Agent is linked to another broker" }, { status: 400 })
   }
+  if (agent.brokerId === session.user.id) {
+    return NextResponse.json({ error: "Agent is already linked to you" }, { status: 400 })
+  }
 
-  await prisma.user.update({
-    where: { id: agent.id },
-    data: { brokerId: session.user.id },
+  const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
+
+  const invitation = await prisma.brokerInvitation.upsert({
+    where: { brokerId_agentEmail: { brokerId: session.user.id, agentEmail: email } },
+    update: { status: "pending", expiresAt, token: crypto.randomUUID() },
+    create: { brokerId: session.user.id, agentEmail: email, expiresAt },
+  })
+
+  await sendInvitationEmail({
+    agentEmail: email,
+    brokerEmail: caller.email,
+    token: invitation.token,
   })
 
   return NextResponse.json({ ok: true })

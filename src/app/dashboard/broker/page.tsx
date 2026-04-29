@@ -59,6 +59,11 @@ export default async function BrokerDashboard() {
     orderBy: { createdAt: "asc" },
   })
 
+  const pendingInvitations = await prisma.brokerInvitation.findMany({
+    where: { brokerId: session.user.id, status: "pending" },
+    orderBy: { createdAt: "asc" },
+  })
+
   const completed = agents.filter(a => a.scoreResult)
   const avgFit = completed.length > 0
     ? Math.round(completed.reduce((s, a) => s + a.scoreResult!.overallScore, 0) / completed.length)
@@ -161,7 +166,10 @@ export default async function BrokerDashboard() {
           </div>
         )}
 
-        <ManageAgents agents={agents.map(a => ({ id: a.id, email: a.email, surveyCompleted: a.surveyCompleted }))} />
+        <ManageAgents
+          agents={agents.map(a => ({ id: a.id, email: a.email, surveyCompleted: a.surveyCompleted }))}
+          pendingInvitations={pendingInvitations.map(inv => ({ id: inv.id, agentEmail: inv.agentEmail }))}
+        />
       </main>
     </div>
   )
