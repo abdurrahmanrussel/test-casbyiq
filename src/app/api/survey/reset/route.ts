@@ -1,3 +1,5 @@
+export const runtime = 'edge'
+
 import { auth } from "@/auth"
 import { prisma } from "@/lib/prisma"
 import { NextResponse } from "next/server"

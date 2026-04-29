@@ -1,3 +1,5 @@
+export const runtime = 'edge'
+
 import { NextResponse } from "next/server"
 import { auth } from "@/auth"
 import { prisma } from "@/lib/prisma"
@@ -34,16 +36,14 @@ export async function POST(req: Request) {
   }
 
   if (action === "accept") {
-    await prisma.$transaction([
-      prisma.user.update({
-        where: { id: session.user.id },
-        data: { brokerId: invitation.brokerId },
-      }),
-      prisma.brokerInvitation.update({
-        where: { token },
-        data: { status: "accepted" },
-      }),
-    ])
+    await prisma.user.update({
+      where: { id: session.user.id },
+      data: { brokerId: invitation.brokerId },
+    })
+    await prisma.brokerInvitation.update({
+      where: { token },
+      data: { status: "accepted" },
+    })
   } else {
     await prisma.brokerInvitation.update({
       where: { token },
