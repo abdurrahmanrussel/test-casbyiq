@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "prisma generate && next build",
-    "build:cf": "next build && npx @cloudflare/next-on-pages",
+    "build:cf": "npx @opennextjs/cloudflare build",
     "start": "next start",
     "lint": "eslint",
     "test": "jest",
@@ -30,7 +30,7 @@
     "ws": "^8.20.0"
   },
   "devDependencies": {
-    "@cloudflare/next-on-pages": "^1",
+    "@opennextjs/cloudflare": "latest",
     "@prisma/adapter-pg": "^7.8.0",
     "@tailwindcss/postcss": "^4",
     "@testing-library/jest-dom": "^6.9.1",
