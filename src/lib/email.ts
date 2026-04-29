@@ -1,6 +1,8 @@
 import { Resend } from "resend"
 
-const resend = new Resend(process.env.RESEND_API_KEY)
+function getResend() {
+  return new Resend(process.env.RESEND_API_KEY)
+}
 
 const FROM = process.env.EMAIL_FROM ?? "onboarding@resend.dev"
 
@@ -13,7 +15,7 @@ export async function sendVerificationEmail({
 }) {
   const verifyUrl = `${process.env.BASE_URL}/api/auth/verify-email?token=${token}`
 
-  await resend.emails.send({
+  await getResend().emails.send({
     from: FROM,
     to: email,
     subject: "Verify your KasbyIQ account",
@@ -47,7 +49,7 @@ export async function sendInvitationEmail({
 }) {
   const acceptUrl = `${process.env.BASE_URL}/invitation/accept?token=${token}`
 
-  await resend.emails.send({
+  await getResend().emails.send({
     from: FROM,
     to: agentEmail,
     subject: `${brokerEmail} invited you to connect on KasbyIQ`,
