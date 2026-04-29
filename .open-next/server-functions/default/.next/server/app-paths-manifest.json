@@ -1,0 +1,21 @@
+{
+  "/(auth)/login/page": "app/(auth)/login/page.js",
+  "/(auth)/register/page": "app/(auth)/register/page.js",
+  "/_global-error/page": "app/_global-error/page.js",
+  "/_not-found/page": "app/_not-found/page.js",
+  "/api/auth/[...nextauth]/route": "app/api/auth/[...nextauth]/route.js",
+  "/api/auth/register/route": "app/api/auth/register/route.js",
+  "/api/auth/verify-email/route": "app/api/auth/verify-email/route.js",
+  "/api/broker/add-agent/route": "app/api/broker/add-agent/route.js",
+  "/api/broker/remove-agent/route": "app/api/broker/remove-agent/route.js",
+  "/api/invitation/accept/route": "app/api/invitation/accept/route.js",
+  "/api/survey/answer/route": "app/api/survey/answer/route.js",
+  "/api/survey/complete/route": "app/api/survey/complete/route.js",
+  "/api/survey/reset/route": "app/api/survey/reset/route.js",
+  "/dashboard/agent/page": "app/dashboard/agent/page.js",
+  "/dashboard/broker/page": "app/dashboard/broker/page.js",
+  "/favicon.ico/route": "app/favicon.ico/route.js",
+  "/invitation/accept/page": "app/invitation/accept/page.js",
+  "/onboarding/survey/page": "app/onboarding/survey/page.js",
+  "/page": "app/page.js"
+}
