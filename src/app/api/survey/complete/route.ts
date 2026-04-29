@@ -23,24 +23,22 @@ export async function POST(_req?: Request) {
     select: { questionId: true, answer: true },
   })
 
-  const scoredResponses = allResponses.filter(r => SCORED_IDS.has(r.questionId))
+  const scoredResponses = allResponses.filter((r: { questionId: string; answer: string }) => SCORED_IDS.has(r.questionId))
   if (scoredResponses.length < 36) {
     return NextResponse.json({ error: "Incomplete survey" }, { status: 400 })
   }
 
   const scores = calculateScores(scoredResponses)
 
-  await prisma.$transaction([
-    prisma.user.update({
-      where: { id: session.user.id },
-      data: { surveyCompleted: true },
-    }),
-    prisma.scoreResult.upsert({
-      where: { userId: session.user.id },
-      update: { ...scores, surveyType: "agent_intake" },
-      create: { userId: session.user.id, surveyType: "agent_intake", ...scores },
-    }),
-  ])
+  await prisma.user.update({
+    where: { id: session.user.id },
+    data: { surveyCompleted: true },
+  })
+  await prisma.scoreResult.upsert({
+    where: { userId: session.user.id },
+    update: { ...scores, surveyType: "agent_intake" },
+    create: { userId: session.user.id, surveyType: "agent_intake", ...scores },
+  })
 
   return NextResponse.json({ ok: true })
 }
